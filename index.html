@@ -4,7 +4,13 @@
 <meta charset="UTF-8" />
 <title>Smart Queue Management System</title>
 
+<!-- QR Code library -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+<!-- MOBILE OPTIMIZATION -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 
 <style>
   body {
@@ -38,22 +44,24 @@
     border-radius: 18px;
     box-shadow: 0 15px 30px rgba(0,0,0,0.2);
     padding: 22px;
+    overflow-y: auto;
+    max-height: 95vh;
   }
   input, select {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     margin-top: 10px;
     border-radius: 10px;
     border: 1px solid #cbd5f5;
-    font-size: 14px;
+    font-size: 16px;
   }
   button {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     margin-top: 14px;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 600;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
     border: none;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
@@ -106,6 +114,7 @@
     padding: 10px;
     border-radius: 10px;
     margin-top: 8px;
+    font-size: 14px;
   }
 </style>
 </head>
@@ -173,7 +182,7 @@
       <div class="app-title" style="color:#dc2626;">Admin Panel</div>
       <p>Waiting: <b id="waiting">5</b></p>
       <p>Active Counter: <b id="counter">1</b></p>
-      <button class="btn-danger" onclick="callNext()">Call Next</button>
+      <button class="btn-danger" onclick="callNext()">Call Next 🔔</button>
     </div>
 
     <!-- NOTIFICATIONS -->
@@ -191,6 +200,12 @@
   <button onclick="go('notify')">Alerts</button>
   <button onclick="go('admin')">Admin</button>
 </div>
+
+<!-- SOUND ALERT -->
+<audio id="callSound">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.mp3" type="audio/mpeg">
+</audio>
 
 <script>
   let count = 5;
@@ -237,6 +252,14 @@
     document.getElementById("counter").innerText = counter;
 
     notifs.unshift("Counter " + counter + " called next");
+
+    // 🔔 Play sound
+    const sound = document.getElementById("callSound");
+    sound.currentTime = 0;
+    sound.play();
+
+    // 📳 Vibration (if mobile)
+    if (navigator.vibrate) navigator.vibrate(200);
   }
 
   function renderNotifs() {
