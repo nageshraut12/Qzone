@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Smart Queue Management System</title>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #93c5fd, #67e8f9, #bbf7d0);
+  }
+  .app-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: #1e3a8a;
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #334155;
+    margin-bottom: 20px;
+  }
+  .container {
+    min-height: 100vh;
+    padding-bottom: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: white;
+    width: 100%;
+    max-width: 380px;
+    border-radius: 18px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    padding: 22px;
+  }
+  input, select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 1px solid #cbd5f5;
+    font-size: 14px;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  }
+  .btn-user {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+  }
+  .btn-staff {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+  }
+  .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+  }
+  .token {
+    font-size: 44px;
+    font-weight: bold;
+    color: #22c55e;
+    text-align: center;
+    margin: 10px 0;
+  }
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    box-shadow: 0 -3px 12px rgba(0,0,0,0.15);
+  }
+  .bottom-nav button {
+    background: none;
+    border: none;
+    font-weight: 600;
+    color: #1e40af;
+  }
+  .hidden {
+    display: none;
+  }
+  .notif {
+    background: #eff6ff;
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="card">
+
+    <!-- LOGIN -->
+    <div id="login">
+      <div class="app-title">Smart Queue Management System</div>
+      <div class="subtitle">Fast • Fair • Contactless</div>
+
+      <button class="btn-user" onclick="go('home')">
+        Continue as User
+      </button>
+
+      <button class="btn-staff" onclick="go('staffLogin')">
+        Continue as Staff
+      </button>
+    </div>
+
+    <!-- STAFF LOGIN -->
+    <div id="staffLogin" class="hidden">
+      <div class="app-title">Staff Login</div>
+      <input placeholder="Staff ID">
+      <input type="password" placeholder="Password">
+      <button class="btn-staff" onclick="go('admin')">Login</button>
+    </div>
+
+    <!-- HOME -->
+    <div id="home" class="hidden">
+      <div class="app-title">Get Queue Token</div>
+
+      <input id="name" placeholder="Full Name">
+      <input id="phone" placeholder="Phone Number">
+
+      <select id="queueType">
+        <option>Bank</option>
+        <option>Hospital</option>
+        <option>Government</option>
+        <option>Retail</option>
+      </select>
+
+      <select id="priority">
+        <option>Normal</option>
+        <option>Senior</option>
+        <option>Emergency</option>
+      </select>
+
+      <button class="btn-user" onclick="getToken()">Generate Token</button>
+    </div>
+
+    <!-- STATUS -->
+    <div id="status" class="hidden">
+      <div class="app-title" id="queueTitle"></div>
+      <div class="token" id="tokenNo"></div>
+      <div id="qr" style="text-align:center;"></div>
+      <p style="text-align:center;">People ahead: <b id="count">5</b></p>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="admin" class="hidden">
+      <div class="app-title" style="color:#dc2626;">Admin Panel</div>
+      <p>Waiting: <b id="waiting">5</b></p>
+      <p>Active Counter: <b id="counter">1</b></p>
+      <button class="btn-danger" onclick="callNext()">Call Next</button>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div id="notify" class="hidden">
+      <div class="app-title">Notifications</div>
+      <div id="notifs"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button onclick="go('home')">Home</button>
+  <button onclick="go('status')">Status</button>
+  <button onclick="go('notify')">Alerts</button>
+  <button onclick="go('admin')">Admin</button>
+</div>
+
+<script>
+  let count = 5;
+  let counter = 1;
+  let notifs = ["Welcome to Smart Queue Management System"];
+
+  function go(screen) {
+    document.querySelectorAll(".card > div").forEach(d => d.classList.add("hidden"));
+    document.getElementById(screen).classList.remove("hidden");
+    renderNotifs();
+  }
+
+  function getToken() {
+    const name = document.getElementById("name").value;
+    const phone = document.getElementById("phone").value;
+    const priority = document.getElementById("priority").value;
+    const type = document.getElementById("queueType").value;
+
+    if (!name || !phone) {
+      alert("Please enter name and phone number");
+      return;
+    }
+
+    const base = priority === "Emergency" ? 1000 : priority === "Senior" ? 500 : 0;
+    const token = base + Math.floor(Math.random() * 400 + 100);
+
+    count++;
+    document.getElementById("tokenNo").innerText = "#" + token;
+    document.getElementById("queueTitle").innerText = type + " Queue";
+    document.getElementById("count").innerText = count;
+
+    document.getElementById("qr").innerHTML = "";
+    new QRCode(document.getElementById("qr"), "TOKEN:" + token);
+
+    notifs.unshift(priority + " token #" + token + " generated");
+    go("status");
+  }
+
+  function callNext() {
+    if (count > 0) count--;
+    counter = counter % 3 + 1;
+
+    document.getElementById("waiting").innerText = count;
+    document.getElementById("counter").innerText = counter;
+
+    notifs.unshift("Counter " + counter + " called next");
+  }
+
+  function renderNotifs() {
+    const box = document.getElementById("notifs");
+    box.innerHTML = "";
+    notifs.forEach(n => {
+      const d = document.createElement("div");
+      d.className = "notif";
+      d.innerText = n;
+      box.appendChild(d);
+    });
+  }
+
+  go("login");
+</script>
+
+</body>
+</html>
